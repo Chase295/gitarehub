@@ -1,0 +1,4 @@
+# Zugangsdaten und Laufzeitdaten – niemals einchecken
+auftrag/app/config.php
+auftrag/app/daten/*
+!auftrag/app/daten/.gitkeep
