@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# Auftragsverwaltung Pichi's Gitarrenstudio
+# Gilt nur für das Verzeichnis /auftrag/ – die übrige Website bleibt unberührt.
+# ---------------------------------------------------------------------------
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Falls die Anwendung nicht unter /auftrag/ liegt, hier anpassen:
+    RewriteBase /auftrag/
+
+    # HTTP → HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Interne Verzeichnisse und Dateien sperren
+    RewriteRule ^(app|cron)(/|$) - [F,L]
+    RewriteRule (^|/)\. - [F,L]
+
+    # Vorhandene Dateien (CSS, JS, Bilder, install.php) direkt ausliefern
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Alles andere an index.php (z. B. /auftrag/1234, /auftrag/uebersicht)
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Nicht in Suchmaschinen aufnehmen + Sicherheits-Header (auch für CSS/JS/Bilder)
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "no-referrer"
+    Header set X-Frame-Options "DENY"
+</IfModule>
+
+# Dateien, die niemals ausgeliefert werden dürfen
+<FilesMatch "\.(sql|md|log|lock|example\.php|dist)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Statische Dateien dürfen zwischengespeichert werden (Versionsparameter ?v=…)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 30 days"
+    ExpiresByType application/javascript "access plus 30 days"
+    ExpiresByType text/javascript "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+</IfModule>
+
+ErrorDocument 403 "Kein Zugriff."
